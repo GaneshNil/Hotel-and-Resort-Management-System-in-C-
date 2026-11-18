@@ -1,0 +1,7 @@
+HOTEL 1
+CUSTOMER 101 Premium "Shrodinger Nagpur3" "7865432189" "cbsfgscng,jybsdscdf,jybbdxzfgb"
+CUSTOMER 102 Premium "Shrody Morandkar" "1234567890" "Adress,pune,India"
+BOOKING 1001 102 205 2 Completed 1
+FOOD 2 "Coffee" 50 2
+BILL 8000 100 810
+END
