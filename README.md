@@ -15,14 +15,14 @@ g++ -std=c++17 -Wall -Wextra main.cpp -o hotel
 
 - Register Regular or Premium customers. Enter a name, a 10-digit phone number and an address. IDs start at 101.
 - View 15 rooms on three floors. Positions 1–2 are Standard at Rs. 1,500 per day, 3–4 are Deluxe at Rs. 2,500 and 5 is a Suite at Rs. 4,000. Room 203 maps to array row `203 / 100 - 1 = 1` and column `203 % 100 - 1 = 2`. Hotel validates the room before accessing the array.
-- Book by room number or select a type to take the first available room of that type. Hotel verifies the customer, availability and stay duration before assigning an ID starting at 1001. A booking occupies its room immediately and stays active until checkout.
+- Enter a room number or use `-1` for Standard, `-2` for Deluxe or `-3` for Suite to take the first available room of that type. Hotel verifies the customer, availability and stay duration before assigning an ID starting at 1001. A booking occupies its room immediately and stays active until checkout.
 - Order Tea, Coffee, Sandwich, Veg Thali or Paneer Meal against an active booking. Every order keeps its quantity and unit price. The bill shows each line and adds the line totals.
 - Preview a bill at any time. The room rate times the number of days and the food subtotal are combined with `Bill::operator+`. The customer’s rate is applied once to the combined subtotal. Regular customers receive 0% and Premium customers receive 10%.
 - Confirm checkout with `y` or cancel with `n`. A successful checkout saves the final bill before releasing the room. Booking history includes active and completed stays. Billing history shows final bills.
 
 ## Class relationships
 
-In this text diagram, each arrow points from a derived class to its base class.
+In this text diagram, each arrow points from a derived class to its base class. The three room types are specializations of `PricedRoom<DailyRate>`.
 
 ```text
 StandardRoom ──────────> Room (abstract)
@@ -41,13 +41,13 @@ Each FoodOrder contains the FoodItem details used when the order was placed.
 | OOP concept | Where to find it |
 | --- | --- |
 | Classes, objects, encapsulation and constructors | `Customer`, `Room`, `Hotel`, `Booking`, `FoodItem` and `Bill` model the records and operations. Constructors initialise their data. |
-| Abstraction, overriding and runtime polymorphism | `Room` declares pure virtual pricing and type methods. Hotel calls their overrides through a base-class pointer or reference. |
+| Abstraction, overriding and runtime polymorphism | `Room::price` is pure virtual. Hotel calls the rate-specific override through a `Room` pointer or reference. |
 | Single, hierarchical and multiple inheritance | `StandardRoom` extends `Room`. All three room classes share the same base. `PremiumCustomer` extends both `Customer` and `DiscountBenefit`. |
-| Function and operator overloading | The two `Hotel::bookRoom` overloads select a room by number or type. `Bill::operator+` combines charge values. |
-| 2D arrays, dynamic memory and virtual destructors | `Hotel::roomAvailability` mirrors the rooms’ occupancy. Hotel owns a vector of `Room*` allocated with `new` and deletes each through the virtual `Room` destructor. Customer records use `unique_ptr<Customer>` and a virtual destructor. |
+| Function and operator overloading | `Hotel::bookRoom` has overloads that select a room by number or type. `Bill::operator+` combines charge values. |
+| 2D arrays, dynamic memory and virtual destructors | Hotel owns a 2D array of `unique_ptr<Room>`. Each room stores its own occupancy. Room and customer objects are allocated with `make_unique` and released through virtual destructors. |
 | Exceptions and file handling | Hotel throws exceptions for invalid operations and uses file streams to store records. The menu catches operation errors and allows another action. |
-| Function templates and STL | `displayRecords` works with both the customer map and the booking vector. The customer map is keyed by ID and `find_if` locates bookings. |
-| Static member and friend function | `Customer::liveCount` tracks live instances. `displayBillSummary` is a friend of `Bill` and prints its private amounts. |
+| Function templates and STL | `nextId` works with both the customer and booking maps. `PricedRoom` uses an integral template parameter to set the room rate. |
+| Static member and friend function | `DiscountBenefit::rate` stores the shared Premium discount. `printBill` is a friend of `Bill` and prints its private amounts. |
 
 ## Saved records
 
@@ -64,7 +64,7 @@ BILL 7500 360 786
 END
 ```
 
-If `hotel_data.txt` is missing, the program looks for the previous version’s `data/records.txt` and saves the loaded records to `hotel_data.txt` on the next save. If neither file exists, the hotel starts empty. At startup, active bookings restore both occupancy representations. If a saved file is unreadable or malformed, startup reports the problem and exits so staff can recover the file without overwriting it.
+If `hotel_data.txt` is missing, the program looks for the previous version’s `data/records.txt` and saves the loaded records to `hotel_data.txt` on the next save. If neither file exists, the hotel starts empty. At startup, active bookings restore room occupancy. If a saved file is unreadable or malformed, startup reports the problem and exits so staff can recover the file without overwriting it.
 
 ## Sample workflow
 
@@ -94,9 +94,9 @@ To use a fresh dataset, build the program and run its absolute path from an empt
 
 Use `main.cpp` to trace the demonstration after checkout.
 
-1. Start at `main` and follow `runMenu` into either `Hotel::bookRoom` overload. Explain how Hotel validates the room number and uses it to locate the corresponding array cell.
-2. Follow `Hotel::calculateBill` to `Room::calculateRoomPrice`. Explain why the call uses the Deluxe override for room 103. Then show how `Bill::operator+` combines the room and food charges before `withDiscount` applies the Premium rate.
-3. In `Hotel::checkout`, show the final bill being saved before the room is released. In `Hotel::loadRecords`, explain how active bookings rebuild room occupancy after a restart.
-4. Find `Hotel::~Hotel` and `Room::~Room`. Explain why destruction through `Room*` works and why Hotel disables copying.
+1. Start at the menu in `main` and follow `Hotel::bookRoom()` into the room-number or room-type overload. Explain how Hotel validates the room number and uses it to locate the corresponding array cell.
+2. Follow `Hotel::calculateBill` to `Room::price`. Explain why the call uses the Deluxe override for room 103. Then show how `Bill::operator+` combines the room and food charges before `withDiscount` applies the Premium rate.
+3. In `Hotel::checkout`, show the final bill being saved before the room is released. In `Hotel::load`, explain how active bookings rebuild room occupancy after a restart.
+4. Find the 2D array of `unique_ptr<Room>` and `Room::~Room`. Explain how Hotel releases its rooms and why deleting through a base pointer calls the virtual destructor.
 # Hotel-and-Resort-Management-System-in-C-
 # Hotel-and-Resort-Management-System-in-C-
